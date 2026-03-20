@@ -97,7 +97,7 @@ export default async function StudyDetailPage({
               href={`/viewer?studyInstanceUID=${encodeURIComponent(study.studyInstanceUid)}`}
               className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Open split viewer
+              Open viewer workspace
             </Link>
             <a
               href={buildOhifStudyUrl(study.studyInstanceUid)}

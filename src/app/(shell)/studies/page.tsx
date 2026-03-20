@@ -70,7 +70,7 @@ export default async function StudiesPage({
                     href={`/viewer?studyInstanceUID=${encodeURIComponent(study.studyInstanceUid)}`}
                     className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:border-orange-200 hover:bg-orange-50"
                   >
-                    Open viewer
+                    Open viewer workspace
                   </Link>
                 </div>
                 <p className="mt-4 text-sm text-slate-500">Last synced {formatTimestamp(study.updatedAt)}</p>

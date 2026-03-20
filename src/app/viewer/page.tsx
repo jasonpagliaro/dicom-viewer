@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { SectionCard } from "@/components/section-card";
+import { ViewerWorkspace } from "@/components/viewer-workspace";
 import { buildOhifStudyUrl } from "@/lib/orthanc";
 import { findStudyByInstanceUid, getCaseById } from "@/lib/data";
 
@@ -19,95 +19,55 @@ export default async function ViewerPage({
 
   if (!studyInstanceUID || !study) {
     return (
-      <SectionCard eyebrow="Viewer" title="Choose a study">
-        <p className="text-sm text-slate-600">
-          Open this page with a `studyInstanceUID` query parameter from the study browser or a case.
-        </p>
-        <Link
-          href="/studies"
-          className="mt-5 inline-flex rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-          Browse studies
-        </Link>
-      </SectionCard>
+      <div className="flex min-h-dvh items-center justify-center px-6 py-12">
+        <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-slate-950/74 p-8 shadow-[0_30px_100px_rgba(2,6,23,0.52)] backdrop-blur-xl">
+          <p className="text-[0.72rem] uppercase tracking-[0.3em] text-orange-300/80">Viewer</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Choose a study</h1>
+          <p className="mt-4 text-sm leading-7 text-slate-300">
+            Open this page with a `studyInstanceUID` query parameter from the study browser or a
+            case.
+          </p>
+          <Link
+            href="/studies"
+            className="mt-6 inline-flex rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-orange-50"
+          >
+            Browse studies
+          </Link>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.78fr)]">
-      <SectionCard eyebrow="Viewer" title={study.displayTitle}>
-        <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-950">
-          <iframe
-            src={buildOhifStudyUrl(study.studyInstanceUid)}
-            className="h-[72vh] w-full"
-            title={`OHIF viewer for ${study.displayTitle}`}
-          />
-        </div>
-      </SectionCard>
+  const directHref = buildOhifStudyUrl(study.studyInstanceUid);
 
-      <SectionCard eyebrow="Sidebar" title="Case context">
-        {item ? (
-          <div className="grid gap-4">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="font-semibold text-slate-950">{item.title}</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                {item.description || "No description added for this case."}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {item.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="section-title">Reports</p>
-              <div className="mt-4 grid gap-3">
-                {item.reports.length === 0 ? (
-                  <p className="text-sm text-slate-500">No reports for this case yet.</p>
-                ) : (
-                  item.reports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
-                    >
-                      <p className="font-semibold text-slate-900">{report.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {report.status === "FINAL" ? "Final" : "Draft"} | Revision {report.revisionNumber}
-                      </p>
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        {report.impression || report.findings || "No report text yet."}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-            <Link
-              href={`/cases/${item.id}`}
-              className="inline-flex rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Open full case workspace
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            <p className="text-sm text-slate-600">
-              This view is running without a case sidebar. Open the viewer from a case to include reports and share context alongside OHIF.
-            </p>
-            <Link
-              href={`/studies/${study.id}`}
-              className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-orange-200 hover:bg-orange-50"
-            >
-              Open study detail
-            </Link>
-          </div>
-        )}
-      </SectionCard>
-    </div>
+  return (
+    <ViewerWorkspace
+      backHref={item ? `/cases/${item.id}` : `/studies/${study.id}`}
+      backLabel={item ? "Back to case" : "Back to study"}
+      caseContext={
+        item
+          ? {
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              tags: item.tags,
+              reports: item.reports.map((report) => ({
+                id: report.id,
+                title: report.title,
+                status: report.status,
+                revisionNumber: report.revisionNumber,
+                impression: report.impression,
+                findings: report.findings,
+              })),
+            }
+          : null
+      }
+      directHref={directHref}
+      study={{
+        id: study.id,
+        displayTitle: study.displayTitle,
+        studyInstanceUid: study.studyInstanceUid,
+      }}
+    />
   );
 }

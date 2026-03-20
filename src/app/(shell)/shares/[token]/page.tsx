@@ -47,7 +47,7 @@ export default async function SharePage({
                 href={`/viewer?studyInstanceUID=${encodeURIComponent(study.studyInstanceUid)}&caseId=${shared.case.id}`}
                 className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Open viewer
+                Open viewer workspace
               </Link>
             </div>
           ))}

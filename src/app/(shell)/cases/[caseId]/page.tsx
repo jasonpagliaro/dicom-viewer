@@ -90,7 +90,7 @@ export default async function CaseDetailPage({
                             )}&caseId=${item.id}`}
                             className="rounded-full bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                           >
-                            Open viewer
+                            Open viewer workspace
                           </Link>
                         </div>
                       </div>
