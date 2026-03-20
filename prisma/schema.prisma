@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UploadBatchStatus {
+  CREATED
+  READY
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum UploadFileStatus {
+  UPLOADED
+  PROCESSED
+  SKIPPED
+  FAILED
+}
+
+enum ReportStatus {
+  DRAFT
+  FINAL
+}
+
+model UploadBatch {
+  id                 String            @id @default(cuid())
+  label              String?
+  expectedFilesCount Int
+  completedFilesCount Int             @default(0)
+  processedFilesCount Int             @default(0)
+  warningCount       Int               @default(0)
+  status             UploadBatchStatus @default(CREATED)
+  errorMessage       String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  completedAt        DateTime?
+  files              UploadFile[]
+}
+
+model UploadFile {
+  id             String           @id @default(cuid())
+  batchId        String
+  tusId          String           @unique
+  originalName   String
+  relativePath   String?
+  mimeType       String?
+  sizeBytes      BigInt
+  storagePath    String
+  status         UploadFileStatus @default(UPLOADED)
+  warningMessage String?
+  errorMessage   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  batch          UploadBatch      @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+}
+
+model Study {
+  id               String      @id @default(cuid())
+  orthancStudyId   String      @unique
+  studyInstanceUid String      @unique
+  patientName      String?
+  patientId        String?
+  accessionNumber  String?
+  studyDescription String?
+  modalities       String[]
+  studyDate        DateTime?
+  studyTime        String?
+  seriesCount      Int         @default(0)
+  instanceCount    Int         @default(0)
+  metadata         Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  lastSyncedAt     DateTime?
+  series           Series[]
+  caseStudies      CaseStudy[]
+}
+
+model Series {
+  id                String   @id @default(cuid())
+  studyId           String
+  orthancSeriesId   String   @unique
+  seriesInstanceUid String?  @unique
+  modality          String?
+  seriesDescription String?
+  seriesNumber      Int?
+  instanceCount     Int      @default(0)
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  study             Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+
+  @@index([studyId])
+}
+
+model Case {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  tags        String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  caseStudies CaseStudy[]
+  reports     Report[]
+  shareTokens ShareToken[]
+}
+
+model CaseStudy {
+  caseId     String
+  studyId    String
+  position   Int      @default(0)
+  attachedAt DateTime @default(now())
+  study      Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@id([caseId, studyId])
+  @@index([studyId])
+}
+
+model Report {
+  id                String       @id @default(cuid())
+  caseId            String
+  title             String       @default("Primary Report")
+  authorDisplayName String?
+  status            ReportStatus @default(DRAFT)
+  clinicalInfo      String       @default("")
+  technique         String       @default("")
+  findings          String       @default("")
+  impression        String       @default("")
+  revisionNumber    Int          @default(1)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  finalizedAt       DateTime?
+  case              Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  revisions         ReportRevision[]
+
+  @@index([caseId])
+}
+
+model ReportRevision {
+  id                String       @id @default(cuid())
+  reportId          String
+  revisionNumber    Int
+  authorDisplayName String?
+  status            ReportStatus
+  snapshot          Json
+  createdAt         DateTime     @default(now())
+  report            Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, revisionNumber])
+  @@index([reportId])
+}
+
+model ShareToken {
+  id           String   @id @default(cuid())
+  caseId       String
+  token        String   @unique
+  label        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  revokedAt    DateTime?
+  lastAccessedAt DateTime?
+  case         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+}
