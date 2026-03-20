@@ -50,7 +50,7 @@ services:
       - -host=0.0.0.0
       - -port=1080
       - -base-path=/files/
-      - -dir=/uploads
+      - -upload-dir=/uploads
       - -hooks-http=http://worker:4000/hooks/tusd
       - -hooks-enabled-events=post-finish
       - -behind-proxy
