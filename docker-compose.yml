@@ -1,0 +1,108 @@
+services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    depends_on:
+      web:
+        condition: service_started
+      orthanc:
+        condition: service_started
+      tusd:
+        condition: service_started
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+  web:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dicom_viewer?schema=public
+      NEXT_PUBLIC_TUS_ENDPOINT: /files
+    command: ["sh", "-c", "npm run prisma:migrate && npm run start"]
+
+  worker:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orthanc:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dicom_viewer?schema=public
+      ORTHANC_INTERNAL_URL: http://orthanc:8042
+      UPLOADS_DIRECTORY: /uploads
+      WORKER_PORT: 4000
+    command: ["npm", "run", "start:worker"]
+    volumes:
+      - uploads-storage:/uploads
+
+  tusd:
+    image: tusproject/tusd:v2.8.0
+    depends_on:
+      worker:
+        condition: service_started
+    command:
+      - -host=0.0.0.0
+      - -port=1080
+      - -base-path=/files/
+      - -dir=/uploads
+      - -hooks-http=http://worker:4000/hooks/tusd
+      - -hooks-enabled-events=post-finish
+      - -behind-proxy
+    volumes:
+      - uploads-storage:/uploads
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dicom_viewer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dicom_viewer"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  orthanc:
+    image: orthancteam/orthanc:26.1.0-full
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DICOM_WEB_PLUGIN_ENABLED: "true"
+      GDCM_PLUGIN_ENABLED: "true"
+      OHIF_PLUGIN_ENABLED: "true"
+      POSTGRESQL_PLUGIN_ENABLED: "true"
+      ORTHANC__NAME: dicom-viewer
+      ORTHANC__AUTHENTICATION_ENABLED: "false"
+      ORTHANC__REMOTE_ACCESS_ALLOWED: "true"
+      ORTHANC__DICOM_WEB__ROOT: /dicom-web/
+      ORTHANC__OHIF__DATA_SOURCE: dicom-web
+      ORTHANC__OHIF__ROUTER_BASENAME: /imaging/ohif/
+      ORTHANC__OHIF__USER_CONFIGURATION: /etc/orthanc/ohif.js
+      ORTHANC__POSTGRESQL__HOST: postgres
+      ORTHANC__POSTGRESQL__PORT: "5432"
+      ORTHANC__POSTGRESQL__DATABASE: dicom_viewer
+      ORTHANC__POSTGRESQL__USERNAME: postgres
+      ORTHANC__POSTGRESQL__PASSWORD: postgres
+    healthcheck:
+      test: ["CMD", "python3", "/probes/test-aliveness.py"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - orthanc-storage:/var/lib/orthanc/db
+      - ./orthanc/ohif.js:/etc/orthanc/ohif.js:ro
+
+volumes:
+  orthanc-storage:
+  postgres-data:
+  uploads-storage:

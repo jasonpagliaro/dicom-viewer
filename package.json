@@ -1,0 +1,57 @@
+{
+  "name": "dicom-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:worker": "tsx src/worker/index.ts",
+    "build": "next build",
+    "start": "next start",
+    "start:worker": "tsx src/worker/index.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "postinstall": "prisma generate"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "@uppy/core": "^4.4.1",
+    "@uppy/dashboard": "^4.3.0",
+    "@uppy/drag-drop": "^4.1.1",
+    "@uppy/file-input": "^4.1.1",
+    "@uppy/progress-bar": "^4.2.1",
+    "@uppy/react": "^4.4.1",
+    "@uppy/tus": "^4.2.2",
+    "axios": "^1.9.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "express": "^5.1.0",
+    "form-data": "^4.0.2",
+    "lucide-react": "^0.511.0",
+    "nanoid": "^5.1.5",
+    "next": "16.2.0",
+    "pdf-lib": "^1.17.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "unzipper": "^0.12.3",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/express": "^5.0.3",
+    "@types/unzipper": "^0.10.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.0",
+    "prisma": "^6.7.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.3",
+    "typescript": "^5"
+  }
+}

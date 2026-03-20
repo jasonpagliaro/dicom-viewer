@@ -1,0 +1,19 @@
+{
+  auto_https off
+}
+
+:80 {
+  encode gzip zstd
+
+  handle_path /imaging/* {
+    reverse_proxy orthanc:8042
+  }
+
+  handle /files/* {
+    reverse_proxy tusd:1080
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+}
